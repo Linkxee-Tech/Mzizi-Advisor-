@@ -2,6 +2,8 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { NAV_ITEMS, THEME } from '../constants';
 import Logo from './Logo';
+import { useTheme } from '../contexts/ThemeContext';
+import { Moon, Sun } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +11,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
 
   // Hide nav on onboarding
   if (location.pathname === '/onboarding') {
@@ -41,15 +48,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </NavLink>
           ))}
         </nav>
+
+        {/* Desktop Theme Toggle */}
+        <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+             <button 
+                onClick={toggleTheme}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                <span className="font-medium">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+            </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-[100dvh] md:h-screen relative overflow-hidden bg-gray-50 dark:bg-transparent transition-colors duration-300">
         {/* Mobile Header */}
-        <header className="md:hidden bg-white dark:bg-gray-800 p-4 flex items-center justify-center border-b border-gray-100 dark:border-gray-700 z-10 sticky top-0 transition-colors duration-300">
+        <header className="md:hidden bg-white dark:bg-gray-800 p-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 z-10 sticky top-0 transition-colors duration-300">
+           {/* Spacer for centering */}
+           <div className="w-9" />
            <div className="scale-75">
              <Logo />
            </div>
+           <button 
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-gray-600"
+                aria-label="Toggle Theme"
+           >
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+           </button>
         </header>
 
         <div className="flex-1 overflow-y-auto no-scrollbar pb-20 md:pb-0 text-gray-900 dark:text-gray-100">

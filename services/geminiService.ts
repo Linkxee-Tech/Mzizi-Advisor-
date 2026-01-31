@@ -1,9 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { BusinessProfile, AdviceCardData } from "../types";
+import { BusinessProfile, AdviceCardData, PricingData } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 
-// Fallback mock for when API key is missing in demo env
+// Fallback mock
 const MOCK_ADVICE: AdviceCardData = {
   keyInsight: "Your pricing is likely too low for your premium ingredients.",
   actions: [
@@ -19,11 +19,10 @@ export const generateAdvisorResponse = async (
   prompt: string,
   profile: BusinessProfile,
   history: { role: string; parts: { text: string }[] }[] = []
-): Promise<{ text: string; structured?: AdviceCardData }> => {
+): Promise<{ text: string; structured?: AdviceCardData; pricing?: PricingData }> => {
   
   if (!apiKey) {
     console.warn("No API Key provided. Returning mock response.");
-    // Simulate delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     return { 
       text: "I've analyzed your request. Here is what I suggest:", 
@@ -35,34 +34,52 @@ export const generateAdvisorResponse = async (
 
   const systemInstruction = `
     You are Mzizi, an expert AI Business Advisor for African SMEs.
-    User Profile:
+    
+    USER PROFILE:
     - Name: ${profile.ownerName}
     - Business: ${profile.businessName} (${profile.businessType})
-    - Location: ${profile.country}
-    - Scale: ${profile.teamSize} employees, ${profile.revenueRange} annual revenue
-    - Key Strength: ${profile.primaryStrength}
-    - Strategic Goals: ${profile.goals.join(", ")}
+    - Country: ${profile.country}
+    - Currency: ${profile.currency}
+    - Goals: ${profile.goals.join(", ")}
     
-    Tone: Trustworthy, Friendly, Simple, Authoritative. No jargon.
-    
-    If the user asks for specific business advice (pricing, marketing, strategy), you MUST return a structured JSON response.
-    If the user engages in small talk, return a plain text response.
-    
-    For structured advice, the JSON schema is:
-    {
-      "keyInsight": "One sentence summary of the core insight",
-      "actions": ["Action 1", "Action 2", "Action 3"],
-      "nextStep": "The immediate next thing to do",
-      "confidence": "High" | "Medium" | "Low",
-      "isAdvice": true
-    }
+    CORE RULES:
+    1. **Registration & Compliance:** If the user asks about registration, you MUST provide steps specific to **${profile.country}**.
+       - Nigeria: Mention CAC (Corporate Affairs Commission), TIN (Tax ID).
+       - Kenya: Mention eCitizen, BRS (Business Registration Service).
+       - South Africa: Mention CIPC (Companies and Intellectual Property Commission).
+       - Ghana: Mention RGD (Registrar General's Department).
+       - General: If country unknown, provide general best practices but warn to check local laws.
+       - Format this as a structured 'Advice Card' with checklist actions.
 
-    Keep answers concise. Use local context (e.g. ${profile.currency}) where appropriate.
+    2. **Pricing:** If the user asks about pricing or calculation:
+       - Attempt to calculate a price based on their inputs.
+       - If they haven't provided costs, ask for them.
+       - If they HAVE provided costs/numbers, return a **Pricing Data** JSON.
+       - Assume a healthy margin (20-40%) if not specified.
+
+    3. **Tone:** Trustworthy, Friendly, Simple, Authoritative. No jargon.
+
+    RESPONSE FORMAT:
+    You must respond in JSON.
+    
+    Schema:
+    {
+      "text": "Conversational text",
+      "type": "ADVICE" | "PRICING" | "TEXT",
+      "adviceData": { ...AdviceCardData Schema... },
+      "pricingData": {
+         "itemName": "Name of product",
+         "costs": [{"name": "Item", "amount": 100}],
+         "totalCost": 100,
+         "markupPercentage": 20,
+         "recommendedPrice": 120,
+         "profitAmount": 20,
+         "currency": "${profile.currency}"
+      }
+    }
   `;
 
   try {
-    // Construct the full conversation history including the new prompt
-    // The API expects 'model' role, our internal type is 'model', so it matches.
     const contents = [
       ...history,
       { role: 'user', parts: [{ text: prompt }] }
@@ -70,15 +87,15 @@ export const generateAdvisorResponse = async (
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: contents, // Pass the full history here
+      contents: contents,
       config: {
         systemInstruction: systemInstruction,
-        responseMimeType: "application/json", // Force JSON for easier parsing of the mixed intent
+        responseMimeType: "application/json",
         responseSchema: {
            type: Type.OBJECT,
            properties: {
-             text: { type: Type.STRING, description: "The conversational part of the response or the full response if no advice is needed." },
-             isAdvice: { type: Type.BOOLEAN, description: "True if providing specific business advice" },
+             text: { type: Type.STRING },
+             type: { type: Type.STRING, enum: ["ADVICE", "PRICING", "TEXT"] },
              adviceData: {
                type: Type.OBJECT,
                properties: {
@@ -88,6 +105,28 @@ export const generateAdvisorResponse = async (
                   confidence: { type: Type.STRING, enum: ["High", "Medium", "Low"] }
                },
                nullable: true
+             },
+             pricingData: {
+                type: Type.OBJECT,
+                properties: {
+                    itemName: { type: Type.STRING },
+                    costs: { 
+                        type: Type.ARRAY, 
+                        items: { 
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING },
+                                amount: { type: Type.NUMBER }
+                            }
+                        } 
+                    },
+                    totalCost: { type: Type.NUMBER },
+                    markupPercentage: { type: Type.NUMBER },
+                    recommendedPrice: { type: Type.NUMBER },
+                    profitAmount: { type: Type.NUMBER },
+                    currency: { type: Type.STRING }
+                },
+                nullable: true
              }
            }
         }
@@ -99,19 +138,22 @@ export const generateAdvisorResponse = async (
 
     const parsed = JSON.parse(jsonText);
 
-    if (parsed.isAdvice && parsed.adviceData) {
-        return {
-            text: parsed.text || "Here is a plan for you:",
-            structured: {
-                keyInsight: parsed.adviceData.keyInsight,
-                actions: parsed.adviceData.actions.map((a: string) => ({ text: a, completed: false })),
-                nextStep: parsed.adviceData.nextStep,
-                confidence: parsed.adviceData.confidence
-            }
+    let result: { text: string; structured?: AdviceCardData; pricing?: PricingData } = {
+        text: parsed.text || "Here is the information you requested."
+    };
+
+    if (parsed.type === 'ADVICE' && parsed.adviceData) {
+        result.structured = {
+            keyInsight: parsed.adviceData.keyInsight,
+            actions: parsed.adviceData.actions.map((a: string) => ({ text: a, completed: false })),
+            nextStep: parsed.adviceData.nextStep,
+            confidence: parsed.adviceData.confidence
         };
+    } else if (parsed.type === 'PRICING' && parsed.pricingData) {
+        result.pricing = parsed.pricingData;
     }
 
-    return { text: parsed.text };
+    return result;
 
   } catch (error) {
     console.error("Gemini API Error:", error);

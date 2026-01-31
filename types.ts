@@ -14,12 +14,24 @@ export interface BusinessProfile {
   goals: string[];
 }
 
+export interface PricingData {
+  itemName: string;
+  costs: { name: string; amount: number }[];
+  totalCost: number;
+  markupPercentage: number;
+  recommendedPrice: number;
+  profitAmount: number;
+  currency: string;
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'model';
   text: string;
   isStructured?: boolean; // If true, render as an advice card
   structuredData?: AdviceCardData;
+  isPricing?: boolean; // New: If true, render pricing card
+  pricingData?: PricingData; // New: Data for pricing
   timestamp: number;
 }
 

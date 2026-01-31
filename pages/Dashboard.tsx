@@ -1,9 +1,9 @@
 import React from 'react';
 import { BusinessProfile } from '../types';
 import { THEME, TOOLS } from '../constants';
-import { ArrowRight, TrendingUp, AlertCircle, CheckCircle, Moon, Sun } from 'lucide-react';
+import { TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface DashboardProps {
@@ -21,11 +21,7 @@ const MOCK_DATA = [
 ];
 
 const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
-  const { theme, setTheme } = useTheme();
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
+  const { theme } = useTheme();
 
   return (
     <div className="p-6 space-y-6">
@@ -35,13 +31,6 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Good morning, {profile.ownerName} ☀️</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{profile.businessName} • {profile.businessType}</p>
         </div>
-        <button 
-          onClick={toggleTheme}
-          className="p-2.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-400"
-          aria-label="Toggle Theme"
-        >
-          {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-        </button>
       </div>
 
       {/* Snapshot Card */}
@@ -100,7 +89,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
       {/* Quick Tools Grid */}
       <div>
         <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-3">Business Tools</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {TOOLS.slice(0, 4).map((tool) => (
                 <Link to={`/chat?context=${tool.id}`} key={tool.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 dark:hover:border-green-500 transition-colors flex flex-col items-start gap-2">
                     <span className="text-2xl">{tool.icon}</span>
