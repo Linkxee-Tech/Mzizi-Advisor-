@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BusinessProfile } from '../types';
 import { THEME, TOOLS } from '../constants';
-import { TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { TrendingUp, AlertCircle, CheckCircle, Search, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -22,6 +22,16 @@ const MOCK_DATA = [
 
 const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
+  const [askInput, setAskInput] = useState('');
+
+  const handleQuickAsk = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (askInput.trim()) {
+        // Navigate to chat with the prompt in query params
+        navigate(`/chat?prompt=${encodeURIComponent(askInput)}`);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -31,6 +41,27 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Good morning, {profile.ownerName} ☀️</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">{profile.businessName} • {profile.businessType}</p>
         </div>
+      </div>
+
+      {/* Ask Advisor Widget (New Feature) */}
+      <div className="bg-white dark:bg-gray-800 p-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+         <form onSubmit={handleQuickAsk} className="relative flex items-center">
+            <Search className="absolute left-4 w-5 h-5 text-gray-400" />
+            <input 
+                type="text"
+                value={askInput}
+                onChange={(e) => setAskInput(e.target.value)}
+                placeholder="Ask Mzizi: How can I sell more this week?"
+                className="w-full pl-12 pr-12 py-4 rounded-xl bg-transparent outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400"
+            />
+            <button 
+                type="submit"
+                disabled={!askInput.trim()}
+                className="absolute right-2 p-2 bg-green-800 text-white rounded-lg hover:bg-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <ArrowRight className="w-4 h-4" />
+            </button>
+         </form>
       </div>
 
       {/* Snapshot Card */}
@@ -88,7 +119,10 @@ const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
 
       {/* Quick Tools Grid */}
       <div>
-        <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-3">Business Tools</h3>
+        <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg">Business Tools</h3>
+            <Link to="/tools" className="text-green-700 dark:text-green-400 text-sm font-medium">View all</Link>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {TOOLS.slice(0, 4).map((tool) => (
                 <Link to={`/chat?context=${tool.id}`} key={tool.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 dark:hover:border-green-500 transition-colors flex flex-col items-start gap-2">

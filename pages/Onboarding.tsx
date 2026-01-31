@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PERSONAS } from '../constants';
+import { PERSONAS, CURRENCIES } from '../constants';
 import { BusinessProfile, PersonaId } from '../types';
-import { User, ArrowRight, Briefcase, MapPin, ChevronLeft, Mail, Lock, CheckCircle2, TrendingUp, Users, Award, Moon, Sun } from 'lucide-react';
+import { User, ArrowRight, Briefcase, MapPin, ChevronLeft, Mail, Lock, CheckCircle2, TrendingUp, Users, Award, Moon, Sun, Wallet } from 'lucide-react';
 import Logo from '../components/Logo';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -18,6 +18,24 @@ type ViewState = 'landing' | 'login' | 'signup';
 const AFRICAN_COUNTRIES = [
   "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon", "Central African Republic", "Chad", "Comoros", "Democratic Republic of the Congo", "Republic of the Congo", "Djibouti", "Egypt", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Ivory Coast", "Kenya", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe"
 ].sort();
+
+const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  "Algeria": "DA", "Angola": "Kz", "Benin": "CFA", "Botswana": "P",
+  "Burkina Faso": "CFA", "Burundi": "FBu", "Cabo Verde": "Esc",
+  "Cameroon": "FCFA", "Central African Republic": "FCFA", "Chad": "FCFA",
+  "Comoros": "CF", "Democratic Republic of the Congo": "FC",
+  "Republic of the Congo": "FCFA", "Djibouti": "Fdj", "Egypt": "E£",
+  "Equatorial Guinea": "FCFA", "Eritrea": "Nfk", "Eswatini": "L",
+  "Ethiopia": "Br", "Gabon": "FCFA", "Gambia": "D", "Ghana": "₵",
+  "Guinea": "FG", "Guinea-Bissau": "CFA", "Ivory Coast": "CFA",
+  "Kenya": "KSh", "Lesotho": "L", "Liberia": "$", "Libya": "LD",
+  "Madagascar": "Ar", "Malawi": "MK", "Mali": "CFA", "Mauritania": "UM",
+  "Mauritius": "₨", "Morocco": "DH", "Mozambique": "MT", "Namibia": "$",
+  "Niger": "CFA", "Nigeria": "₦", "Rwanda": "RF", "Sao Tome and Principe": "Db",
+  "Senegal": "CFA", "Seychelles": "₨", "Sierra Leone": "Le", "Somalia": "Sh",
+  "South Africa": "R", "South Sudan": "£", "Sudan": "£", "Tanzania": "TSh",
+  "Togo": "CFA", "Tunisia": "DT", "Uganda": "USh", "Zambia": "ZK", "Zimbabwe": "ZiG"
+};
 
 const INDUSTRIES = [
     "Retail & Commerce",
@@ -103,6 +121,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ setProfile }) => {
     businessName: '',
     businessType: INDUSTRIES[0],
     country: 'Nigeria',
+    currency: '₦', // Default
     teamSize: TEAM_SIZES[1],
     revenueRange: REVENUE_RANGES[1],
     primaryStrength: STRENGTHS[0],
@@ -187,19 +206,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ setProfile }) => {
 
     await simulateAuthDelay();
 
-    // Basic Currency Mapping
-    const currencyMap: Record<string, string> = {
-        'Nigeria': '₦',
-        'Kenya': 'KSh',
-        'South Africa': 'R',
-        'Ghana': '₵',
-        'Egypt': 'E£',
-        'Rwanda': 'RF',
-        'Tanzania': 'TSh',
-        'Uganda': 'USh',
-        'Morocco': 'DH',
-    };
-
     const newProfile: BusinessProfile = {
         id: 'user-' + Date.now(),
         email: formData.email,
@@ -207,7 +213,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ setProfile }) => {
         businessName: formData.businessName,
         businessType: formData.businessType,
         country: formData.country,
-        currency: currencyMap[formData.country] || '$',
+        currency: formData.currency, // Use selected currency
         revenueRange: formData.revenueRange,
         teamSize: formData.teamSize,
         primaryStrength: formData.primaryStrength,
@@ -380,7 +386,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ setProfile }) => {
             <div className="relative">
                 <select 
                     value={formData.country}
-                    onChange={e => setFormData({...formData, country: e.target.value})}
+                    onChange={e => {
+                        const newCountry = e.target.value;
+                        const newCurrency = COUNTRY_TO_CURRENCY[newCountry] || '$';
+                        setFormData({...formData, country: newCountry, currency: newCurrency});
+                    }}
                     className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-white dark:bg-gray-800 dark:text-white appearance-none"
                 >
                     {AFRICAN_COUNTRIES.map(c => (
@@ -388,6 +398,24 @@ const Onboarding: React.FC<OnboardingProps> = ({ setProfile }) => {
                     ))}
                 </select>
                 <MapPin className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+        </div>
+
+        <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Primary Currency</label>
+            <div className="relative">
+                <select 
+                    value={formData.currency}
+                    onChange={e => setFormData({...formData, currency: e.target.value})}
+                    className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all bg-white dark:bg-gray-800 dark:text-white appearance-none"
+                >
+                    {CURRENCIES.map(c => (
+                        <option key={c.code} value={c.symbol}>
+                            {c.code} - {c.name} ({c.symbol})
+                        </option>
+                    ))}
+                </select>
+                <Wallet className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
         </div>
 

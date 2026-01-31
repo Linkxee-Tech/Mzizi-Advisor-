@@ -34,6 +34,13 @@ const App: React.FC = () => {
     localStorage.setItem('mzizi_profile', JSON.stringify(p));
   };
 
+  const handleUpdateProfile = (updates: Partial<BusinessProfile>) => {
+    if (!profile) return;
+    const updated = { ...profile, ...updates };
+    setProfile(updated);
+    localStorage.setItem('mzizi_profile', JSON.stringify(updated));
+  };
+
   const handleLogout = () => {
     setProfile(null);
     localStorage.clear(); // Clear all data including chat history
@@ -72,7 +79,7 @@ const App: React.FC = () => {
 
             <Route 
               path="/profile" 
-              element={profile ? <Profile profile={profile} onLogout={handleLogout} /> : <Navigate to="/onboarding" replace />} 
+              element={profile ? <Profile profile={profile} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/onboarding" replace />} 
             />
 
             <Route path="*" element={<NotFound />} />

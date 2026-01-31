@@ -20,6 +20,7 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const context = searchParams.get('context');
+  const promptParam = searchParams.get('prompt'); // New: Get prompt from URL
   const toolContext = context ? TOOLS.find(t => t.id === context) : null;
   
   // -- State --
@@ -34,6 +35,8 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
   const [editContent, setEditContent] = useState('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Track if we have already handled the auto-prompt to prevent loops
+  const hasAutoPrompted = useRef(false);
 
   // -- Helpers --
 
@@ -62,9 +65,9 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
         const parsed: ChatSession[] = JSON.parse(savedSessions);
         setSessions(parsed);
         if (parsed.length > 0) {
-          // If a context is provided, we might want a new chat, otherwise load most recent
-          if (!context) {
-             setCurrentSessionId(parsed[0].id); // Load most recent (assuming sorted)
+          // If no specific context/prompt, load most recent
+          if (!context && !promptParam) {
+             setCurrentSessionId(parsed[0].id); 
           }
         }
       } catch (e) { console.error("Error parsing sessions", e); }
@@ -102,28 +105,35 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
     }
   }, [sessions, currentSessionId, loading]);
 
-  // Initialize if no session exists or context requested
+  // Initialize if no session exists or context/prompt requested
   useEffect(() => {
-    if (sessions.length === 0 && !currentSessionId && !loading) {
-        handleNewChat();
-    } else if (context && !loading) {
-        // If context is passed, we check if the CURRENT session is empty. If not, start new.
+    if (loading) return;
+
+    if (promptParam && !hasAutoPrompted.current) {
+        // Handle Quick Ask from Dashboard
+        hasAutoPrompted.current = true;
+        handleNewChat(promptParam); // Start new chat WITH the user prompt auto-filled/sent
+    } else if (context) {
+        // Handle Tool Context
         const curr = getCurrentSession();
         // If current session is undefined or has user messages, start fresh for the tool context
         if (!curr || (curr.messages.length > 1)) { 
-             // Check if we already just created a session for this context (prevent loops)
              const recentSession = sessions[0];
              const isRecentContext = recentSession?.messages[0]?.text.includes(context);
              if (!isRecentContext) {
                  handleNewChat();
+             } else if (currentSessionId !== recentSession.id) {
+                 setCurrentSessionId(recentSession.id);
              }
         }
+    } else if (sessions.length === 0 && !currentSessionId) {
+        handleNewChat();
     }
-  }, [context, sessions.length]);
+  }, [context, promptParam, sessions.length]);
 
   // -- Actions --
 
-  const handleNewChat = () => {
+  const handleNewChat = (autoUserMessage?: string) => {
     let initialMsg = '';
     let title = 'New Chat';
     
@@ -148,6 +158,13 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
     setShowHistory(false);
+
+    // If we have an auto-message (from dashboard), set it to input so user just hits send
+    // Or we could auto-send. Let's pre-fill input for safer UX so user can verify.
+    if (autoUserMessage) {
+        setInput(autoUserMessage);
+        // Optional: Trigger auto-send after a small delay if desired, but filling input is safe.
+    }
   };
 
   const handleSendMessage = async () => {
@@ -332,7 +349,7 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
                 
                 <div className="p-4">
                     <button 
-                        onClick={handleNewChat}
+                        onClick={() => handleNewChat()}
                         className="w-full py-3 px-4 bg-green-800 text-white rounded-xl flex items-center justify-center gap-2 hover:bg-green-900 transition-all shadow-lg shadow-green-900/20"
                     >
                         <Plus className="w-5 h-5" /> Start New Chat
@@ -413,7 +430,7 @@ const Chat: React.FC<ChatProps> = ({ profile }) => {
         </div>
         <div className="flex items-center gap-3">
              <button 
-                onClick={handleNewChat}
+                onClick={() => handleNewChat()}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors sm:hidden"
             >
                 <Plus className="w-5 h-5" />

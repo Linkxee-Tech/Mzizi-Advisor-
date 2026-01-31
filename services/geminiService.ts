@@ -11,6 +11,10 @@ const MOCK_ADVICE: AdviceCardData = {
     { text: "Add 20% margin for labor and overhead", completed: false },
     { text: "Compare prices with the bakery down the street", completed: false }
   ],
+  pitfalls: [
+    "Undervaluing your own labor time",
+    "Ignoring fluctuating ingredient costs"
+  ],
   nextStep: "Adjust price of your best-seller tomorrow.",
   confidence: "High"
 };
@@ -46,27 +50,36 @@ export const generateAdvisorResponse = async (
     1. **Registration & Compliance:** If the user asks about registration, you MUST provide steps specific to **${profile.country}**.
        - Nigeria: Mention CAC (Corporate Affairs Commission), TIN (Tax ID).
        - Kenya: Mention eCitizen, BRS (Business Registration Service).
-       - South Africa: Mention CIPC (Companies and Intellectual Property Commission).
-       - Ghana: Mention RGD (Registrar General's Department).
-       - General: If country unknown, provide general best practices but warn to check local laws.
-       - Format this as a structured 'Advice Card' with checklist actions.
-
+       - South Africa: Mention CIPC.
+       - Ghana: Mention RGD.
+       
     2. **Pricing:** If the user asks about pricing or calculation:
        - Attempt to calculate a price based on their inputs.
        - If they haven't provided costs, ask for them.
        - If they HAVE provided costs/numbers, return a **Pricing Data** JSON.
-       - Assume a healthy margin (20-40%) if not specified.
 
-    3. **Tone:** Trustworthy, Friendly, Simple, Authoritative. No jargon.
+    3. **Strategy & Advice:** For general business questions (sales, marketing, growth):
+       - Provide a "Key Insight".
+       - List concrete "Recommended Actions".
+       - **CRITICAL:** Identify "Common Pitfalls" (mistakes to avoid) for this specific context.
+       - Define a clear "Next Step".
+
+    4. **Tone:** Trustworthy, Friendly, Simple, Authoritative. No jargon. Use local context where possible.
 
     RESPONSE FORMAT:
     You must respond in JSON.
     
     Schema:
     {
-      "text": "Conversational text",
+      "text": "Conversational text summary",
       "type": "ADVICE" | "PRICING" | "TEXT",
-      "adviceData": { ...AdviceCardData Schema... },
+      "adviceData": {
+         "keyInsight": "Main takeaway",
+         "actions": ["Action 1", "Action 2"],
+         "pitfalls": ["Mistake 1", "Mistake 2"],
+         "nextStep": "Immediate next step",
+         "confidence": "High" | "Medium" | "Low"
+      },
       "pricingData": {
          "itemName": "Name of product",
          "costs": [{"name": "Item", "amount": 100}],
@@ -85,8 +98,9 @@ export const generateAdvisorResponse = async (
       { role: 'user', parts: [{ text: prompt }] }
     ];
 
+    // Using gemini-3-pro-preview for complex reasoning tasks as per script requirements
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: contents,
       config: {
         systemInstruction: systemInstruction,
@@ -101,6 +115,7 @@ export const generateAdvisorResponse = async (
                properties: {
                   keyInsight: { type: Type.STRING },
                   actions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  pitfalls: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Common mistakes to avoid" },
                   nextStep: { type: Type.STRING },
                   confidence: { type: Type.STRING, enum: ["High", "Medium", "Low"] }
                },
@@ -146,6 +161,7 @@ export const generateAdvisorResponse = async (
         result.structured = {
             keyInsight: parsed.adviceData.keyInsight,
             actions: parsed.adviceData.actions.map((a: string) => ({ text: a, completed: false })),
+            pitfalls: parsed.adviceData.pitfalls || [],
             nextStep: parsed.adviceData.nextStep,
             confidence: parsed.adviceData.confidence
         };

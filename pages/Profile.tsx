@@ -1,16 +1,33 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BusinessProfile } from '../types';
-import { User, Building2, MapPin, Target, LogOut, Globe, Shield, Mail, Users, TrendingUp, Lock, Award } from 'lucide-react';
+import { CURRENCIES } from '../constants';
+import { User, Building2, MapPin, Target, LogOut, Globe, Shield, Mail, Users, TrendingUp, Lock, Award, ChevronLeft, Wallet } from 'lucide-react';
 
 interface ProfileProps {
   profile: BusinessProfile;
+  onUpdateProfile: (updates: Partial<BusinessProfile>) => void;
   onLogout: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, onLogout }) => {
+const Profile: React.FC<ProfileProps> = ({ profile, onUpdateProfile, onLogout }) => {
+  const navigate = useNavigate();
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onUpdateProfile({ currency: e.target.value });
+  };
+
   return (
     <div className="p-6 pb-24 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Business Profile</h1>
+      <div className="flex items-center gap-3">
+         <button 
+            onClick={() => navigate('/')}
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors md:hidden"
+         >
+            <ChevronLeft className="w-6 h-6" />
+         </button>
+         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Business Profile</h1>
+      </div>
 
       {/* Header Card */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center relative overflow-hidden">
@@ -36,14 +53,30 @@ const Profile: React.FC<ProfileProps> = ({ profile, onLogout }) => {
         </div>
       </div>
 
-      {/* Info Banner */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 flex gap-3 items-start">
-        <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-        <div>
-            <h4 className="text-sm font-bold text-blue-800 dark:text-blue-300">Profile Locked</h4>
-            <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
-                To ensure data integrity, business details can only be edited by an administrator. Please contact support to request changes.
-            </p>
+      {/* Settings Section with Currency Selector */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="p-4 border-b border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 font-bold text-gray-700 dark:text-gray-300 text-sm">
+          Preferences
+        </div>
+        
+        <div className="p-4 flex items-center gap-4">
+             <Wallet className="w-5 h-5 text-gray-400" />
+             <div className="flex-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Preferred Currency</p>
+                <div className="relative">
+                    <select 
+                        value={profile.currency}
+                        onChange={handleCurrencyChange}
+                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg py-2 pl-3 pr-8 text-sm font-medium text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                        {CURRENCIES.map(c => (
+                            <option key={c.code} value={c.symbol}>
+                                {c.symbol} - {c.name} ({c.code})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+             </div>
         </div>
       </div>
 
@@ -142,7 +175,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, onLogout }) => {
       </button>
       
       <p className="text-center text-xs text-gray-400 pt-4">
-        Mzizi Advisor v1.0.1<br/>
+        Mzizi Advisor v1.0.2<br/>
         Made for Africa 🌍
       </p>
     </div>

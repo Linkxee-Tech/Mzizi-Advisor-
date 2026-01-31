@@ -49,6 +49,7 @@ export interface AdviceCardData {
     text: string;
     completed: boolean;
   }[];
+  pitfalls: string[]; // New: List of common mistakes to avoid
   nextStep: string;
   confidence: 'High' | 'Medium' | 'Low';
 }

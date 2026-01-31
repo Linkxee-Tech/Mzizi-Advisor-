@@ -1,6 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const DATA = [
@@ -15,12 +16,21 @@ const DATA = [
 
 const Insights: React.FC = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">Business Insights</h1>
-        <span className="text-sm text-gray-500 dark:text-gray-400">Last 7 Months</span>
+      <div className="flex items-center gap-3">
+         <button 
+              onClick={() => navigate('/')}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors md:hidden"
+          >
+              <ChevronLeft className="w-6 h-6" />
+          </button>
+         <div className="flex-1 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">Business Insights</h1>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Last 7 Months</span>
+         </div>
       </div>
 
       {/* KPIs */}

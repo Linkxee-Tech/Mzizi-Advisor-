@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AdviceCardData } from '../types';
-import { CheckCircle2, ArrowRight, ShieldCheck, Share2, Download, Check } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShieldCheck, Share2, Download, Check, AlertTriangle } from 'lucide-react';
 
 interface AdviceCardProps {
   data: AdviceCardData;
@@ -31,7 +31,8 @@ const AdviceCard: React.FC<AdviceCardProps> = ({ data }) => {
         </div>
       </div>
       
-      <div className="p-5 space-y-4">
+      <div className="p-5 space-y-5">
+        {/* Recommended Actions */}
         <div>
           <h4 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">Recommended Actions</h4>
           <ul className="space-y-3">
@@ -48,6 +49,24 @@ const AdviceCard: React.FC<AdviceCardProps> = ({ data }) => {
           </ul>
         </div>
 
+        {/* Common Pitfalls - New Feature */}
+        {data.pitfalls && data.pitfalls.length > 0 && (
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-4 border border-orange-100 dark:border-orange-800">
+                <h4 className="text-orange-800 dark:text-orange-300 text-xs font-bold uppercase mb-2 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Common Pitfalls to Avoid
+                </h4>
+                <ul className="space-y-1.5">
+                    {data.pitfalls.map((pitfall, idx) => (
+                        <li key={idx} className="text-orange-900 dark:text-orange-200 text-sm flex items-start gap-2">
+                            <span className="mt-1.5 w-1 h-1 rounded-full bg-orange-400 shrink-0" />
+                            <span className="leading-relaxed opacity-90">{pitfall}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )}
+
+        {/* Next Step */}
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
             <h4 className="text-blue-800 dark:text-blue-300 text-xs font-bold uppercase mb-1 flex items-center gap-1">
                 <ArrowRight className="w-3 h-3" /> Next Best Step
@@ -56,6 +75,7 @@ const AdviceCard: React.FC<AdviceCardProps> = ({ data }) => {
         </div>
       </div>
 
+      {/* Action Footer */}
       <div className="px-5 py-3 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex gap-2">
         <button 
           onClick={handleSave}

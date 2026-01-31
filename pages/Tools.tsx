@@ -1,12 +1,23 @@
 import React from 'react';
 import { TOOLS } from '../constants';
-import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 const Tools: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6">
-       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 transition-colors">Business Tools</h1>
+       <div className="flex items-center gap-3 mb-6">
+          <button 
+              onClick={() => navigate('/')}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors md:hidden"
+          >
+              <ChevronLeft className="w-6 h-6" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors">Business Tools</h1>
+       </div>
+       
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
          {TOOLS.map((tool) => (
             <Link 
