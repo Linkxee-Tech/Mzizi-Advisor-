@@ -56,30 +56,30 @@ const App: React.FC = () => {
         <Layout>
           <Routes>
             <Route path="/onboarding" element={<Onboarding setProfile={handleSetProfile} />} />
-            
-            <Route 
-              path="/" 
-              element={profile ? <Dashboard profile={profile} /> : <Navigate to="/onboarding" replace />} 
-            />
-            
-            <Route 
-              path="/chat" 
-              element={profile ? <Chat profile={profile} /> : <Navigate to="/onboarding" replace />} 
-            />
-            
-            <Route 
-              path="/tools" 
-              element={profile ? <Tools /> : <Navigate to="/onboarding" replace />} 
-            />
-            
-            <Route 
-              path="/insights" 
-              element={profile ? <Insights /> : <Navigate to="/onboarding" replace />} 
+
+            <Route
+              path="/"
+              element={profile ? <Dashboard profile={profile} /> : <Navigate to="/onboarding" replace />}
             />
 
-            <Route 
-              path="/profile" 
-              element={profile ? <Profile profile={profile} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/onboarding" replace />} 
+            <Route
+              path="/chat"
+              element={profile ? <Chat profile={profile} /> : <Navigate to="/onboarding" replace />}
+            />
+
+            <Route
+              path="/tools"
+              element={profile ? <Tools /> : <Navigate to="/onboarding" replace />}
+            />
+
+            <Route
+              path="/insights"
+              element={profile ? <Insights profile={profile} /> : <Navigate to="/onboarding" replace />}
+            />
+
+            <Route
+              path="/profile"
+              element={profile ? <Profile profile={profile} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} /> : <Navigate to="/onboarding" replace />}
             />
 
             <Route path="*" element={<NotFound />} />

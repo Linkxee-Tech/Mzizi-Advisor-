@@ -59,3 +59,16 @@ export interface ChartData {
   revenue: number;
   expenses: number;
 }
+
+export interface Tool {
+  id: string;
+  title: string;
+  desc: string;
+  icon: string;
+}
+
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+}
